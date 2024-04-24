@@ -1,9 +1,9 @@
 {
-    "name": "cboden/ratchet"
+    "name": "mkrasselt1/ratchetcustom"
   , "type": "library"
-  , "description": "PHP WebSocket library"
+  , "description": "PHP WebSocket library with parallel running capability"
   , "keywords": ["WebSockets", "Server", "Ratchet", "Sockets", "WebSocket"]
-  , "homepage": "http://socketo.me"
+  , "homepage": "https://github.com/mkrasselt1/RatchetCustom"
   , "license": "MIT"
   , "authors": [
         {
@@ -14,11 +14,17 @@
       , {
             "name": "Matt Bonneau"
           , "role": "Developer"
-        }
+        },
+        {
+          "name": "Michael Krasselt"
+        , "email": "michael@michaelkrasselt.de"
+        , "role": "Developer"
+      }
+    
     ]
   , "support": {
-        "issues": "https://github.com/ratchetphp/Ratchet/issues"
-      , "chat":    "https://gitter.im/reactphp/reactphp"
+        "issues": "https://github.com/mkrasselt1/RatchetCustom/issues"
+      , "chat":    "https://t.me/mkrasselt1"
     }
   , "autoload": {
         "psr-4": {
