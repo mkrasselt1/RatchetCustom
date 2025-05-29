@@ -5,9 +5,9 @@ use React\EventLoop\Factory as LegacyLoopFactory;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Socket\ConnectionInterface as SocketConnection;
+use React\Socket\Server as LegacySocketServer;
 use React\Socket\ServerInterface;
-use React\Socket\Server as Reactor;
-use React\Socket\SecureServer as SecureReactor;
+use React\Socket\SocketServer;
 
 /**
  * Creates an open-ended socket to listen on a port for incoming connections.
@@ -64,7 +64,8 @@ class IoServer {
         // prefer default Loop (reactphp/event-loop v1.2+) over legacy \React\EventLoop\Factory
         $loop = class_exists('React\EventLoop\Loop') ? Loop::get() : LegacyLoopFactory::create();
 
-        $socket = new Reactor($address . ':' . $port, $loop);
+        // prefer SocketServer (reactphp/socket v1.9+) over legacy \React\Socket\Server
+        $socket = class_exists('React\Socket\SocketServer') ? new SocketServer($address . ':' . $port, [], $loop) : new LegacySocketServer($address . ':' . $port, $loop);
 
         return new static($component, $socket, $loop);
     }
