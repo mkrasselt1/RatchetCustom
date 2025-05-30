@@ -111,7 +111,10 @@ class IoServerTest extends TestCase {
     }
 
     public function testFactory() {
-        $this->assertInstanceOf('Ratchet\\Server\\IoServer', IoServer::factory($this->app, 0));
+        $server = IoServer::factory($this->app, 0);
+        $server->socket->close();
+
+        $this->assertInstanceOf('Ratchet\\Server\\IoServer', $server);
     }
 
     public function testNoLoopProvidedError() {

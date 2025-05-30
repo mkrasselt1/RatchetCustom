@@ -1,7 +1,8 @@
 <?php
 namespace Ratchet;
+use React\EventLoop\Factory as LegacyLoopFactory;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
-use React\EventLoop\Factory as LoopFactory;
 use React\Socket\Server as Reactor;
 use React\Socket\SecureServer as SecureReactor;
 use Ratchet\Http\HttpServerInterface;
@@ -72,7 +73,8 @@ class App {
         }
 
         if (null === $loop) {
-            $loop = LoopFactory::create();
+            // prefer default Loop (reactphp/event-loop v1.2+) over legacy \React\EventLoop\Factory
+            $loop = class_exists('React\EventLoop\Loop') ? Loop::get() : LegacyLoopFactory::create();
         }
 
         $this->httpHost = $httpHost;
