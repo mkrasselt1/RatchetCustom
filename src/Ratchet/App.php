@@ -3,8 +3,8 @@ namespace Ratchet;
 use React\EventLoop\Factory as LegacyLoopFactory;
 use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
-use React\Socket\Server as Reactor;
-use React\Socket\SecureServer as SecureReactor;
+use React\Socket\Server as LegacySocketServer;
+use React\Socket\SocketServer;
 use Ratchet\Http\HttpServerInterface;
 use Ratchet\Http\OriginCheck;
 use Ratchet\Wamp\WampServerInterface;
@@ -80,7 +80,8 @@ class App {
         $this->httpHost = $httpHost;
         $this->port = $port;
 
-        $socket = new Reactor($address . ':' . $port, $loop, $context);
+        // prefer SocketServer (reactphp/socket v1.9+) over legacy \React\Socket\Server
+        $socket = class_exists('React\Socket\SocketServer') ? new SocketServer($address . ':' . $port, $context, $loop) : new LegacySocketServer($address . ':' . $port, $loop, $context);
 
         $this->routes  = new RouteCollection;
         $this->_server = new IoServer(new HttpServer(new Router(new UrlMatcher($this->routes, new RequestContext))), $socket, $loop);
@@ -94,7 +95,9 @@ class App {
         } else {
             $flashUri = 8843;
         }
-        $flashSock = new Reactor($flashUri, $loop);
+
+        // prefer SocketServer (reactphp/socket v1.9+) over legacy \React\Socket\Server
+        $flashSock = class_exists('React\Socket\SocketServer') ? new SocketServer($flashUri, [], $loop) : new LegacySocketServer($flashUri, $loop);
         $this->flashServer = new IoServer($policy, $flashSock);
     }
 

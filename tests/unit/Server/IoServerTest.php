@@ -3,7 +3,8 @@ namespace Ratchet\Server;
 use PHPUnit\Framework\TestCase;
 use React\EventLoop\StreamSelectLoop;
 use React\EventLoop\LoopInterface;
-use React\Socket\Server;
+use React\Socket\Server as LegacySocketServer;
+use React\Socket\SocketServer;
 
 /**
  * @covers Ratchet\Server\IoServer
@@ -32,7 +33,9 @@ class IoServerTest extends TestCase {
         $this->app = $this->getMockBuilder('Ratchet\\MessageComponentInterface')->getMock();
 
         $loop = new StreamSelectLoop;
-        $this->reactor = new Server(0, $loop);
+
+        // prefer SocketServer (reactphp/socket v1.9+) over legacy \React\Socket\Server
+        $this->reactor = class_exists('React\Socket\SocketServer') ? new SocketServer('127.0.0.1:0', [], $loop) : new LegacySocketServer('127.0.0.1:0', $loop);
 
         $uri = $this->reactor->getAddress();
         $this->port   = parse_url((strpos($uri, '://') === false ? 'tcp://' : '') . $uri, PHP_URL_PORT);
