@@ -1,10 +1,11 @@
 <?php
 namespace Ratchet\Server;
 use Ratchet\MessageComponentInterface;
+use React\EventLoop\Factory as LegacyLoopFactory;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
 use React\Socket\ConnectionInterface as SocketConnection;
 use React\Socket\ServerInterface;
-use React\EventLoop\Factory as LoopFactory;
 use React\Socket\Server as Reactor;
 use React\Socket\SecureServer as SecureReactor;
 
@@ -14,7 +15,7 @@ use React\Socket\SecureServer as SecureReactor;
  */
 class IoServer {
     /**
-     * @var \React\EventLoop\LoopInterface
+     * @var ?\React\EventLoop\LoopInterface
      */
     public $loop;
 
@@ -60,7 +61,9 @@ class IoServer {
      * @return IoServer
      */
     public static function factory(MessageComponentInterface $component, $port = 80, $address = '0.0.0.0') {
-        $loop   = LoopFactory::create();
+        // prefer default Loop (reactphp/event-loop v1.2+) over legacy \React\EventLoop\Factory
+        $loop = class_exists('React\EventLoop\Loop') ? Loop::get() : LegacyLoopFactory::create();
+
         $socket = new Reactor($address . ':' . $port, $loop);
 
         return new static($component, $socket, $loop);
