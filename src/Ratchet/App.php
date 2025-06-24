@@ -93,7 +93,7 @@ class App {
         if (80 == $port) {
             $flashUri = '0.0.0.0:843';
         } else {
-            $flashUri = 8843;
+            $flashUri = '127.0.0.1:8843';
         }
 
         // prefer SocketServer (reactphp/socket v1.9+) over legacy \React\Socket\Server
