@@ -63,6 +63,23 @@ class IoServerTest extends TestCase {
         //$this->assertTrue(is_int($this->app->last['onOpen'][0]->resourceId));
     }
 
+    public function testHandleOpenWithoutRemoteAddressAssignsEmptyRemoteAddress() {
+        $this->app->expects($this->once())->method('onOpen')->with($this->isInstanceOf('Ratchet\\ConnectionInterface'));
+
+        $conn = $this->getMockBuilder('React\\Socket\\ConnectionInterface')->getMock();
+        $conn->expects($this->once())->method('getRemoteAddress')->willReturn(null);
+
+        // assign dynamic property without raising notice on PHP 8.2+
+        set_error_handler(function () { }, E_DEPRECATED);
+        $conn->stream = STDOUT;
+        restore_error_handler();
+
+        $this->server->handleConnect($conn);
+
+        $this->assertSame('', $conn->decor->remoteAddress);
+        $this->assertSame((int) STDOUT, $conn->decor->resourceId);
+    }
+
     /**
      * @requires extension sockets
      */
