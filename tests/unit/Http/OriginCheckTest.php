@@ -13,7 +13,7 @@ class OriginCheckTest extends AbstractMessageComponentTestCase {
      */
     public function setUpConnection() {
         $this->_reqStub = $this->getMockBuilder('Psr\Http\Message\RequestInterface')->getMock();
-        $this->_reqStub->expects($this->any())->method('getHeader')->will($this->returnValue(['localhost']));
+        $this->_reqStub->expects($this->any())->method('getHeaderLine')->with('Origin')->willReturn('localhost');
 
         parent::setUpConnection();
 
@@ -40,6 +40,24 @@ class OriginCheckTest extends AbstractMessageComponentTestCase {
     public function testCloseOnNonMatchingOrigin() {
         $this->_serv->allowedOrigins = ['socketo.me'];
         $this->_conn->expects($this->once())->method('close');
+
+        $this->_serv->onOpen($this->_conn, $this->_reqStub);
+    }
+
+    public function testCloseOnMissingOrigin() {
+        $this->_serv->allowedOrigins = ['socketo.me'];
+        $this->_conn->expects($this->once())->method('close');
+
+        $this->_reqStub->expects($this->once())->method('getHeaderLine')->with('Origin')->willReturn('');
+
+        $this->_serv->onOpen($this->_conn, $this->_reqStub);
+    }
+
+    public function testCloseOnDuplicateOrigin() {
+        $this->_serv->allowedOrigins = ['socketo.me'];
+        $this->_conn->expects($this->once())->method('close');
+
+        $this->_reqStub->expects($this->once())->method('getHeaderLine')->with('Origin')->willReturn('http://socketo.me,https://socketo.me');
 
         $this->_serv->onOpen($this->_conn, $this->_reqStub);
     }
