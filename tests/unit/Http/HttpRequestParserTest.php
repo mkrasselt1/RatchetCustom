@@ -50,6 +50,18 @@ class HttpRequestParserTest extends TestCase {
         $this->parser->onMessage($conn, "Header-Is: Too Big");
     }
 
+    public function testOnMessageThrowsExceptionForEmptyNewlines() {
+        $conn = $this->getMockBuilder('Ratchet\Mock\Connection')->getMock();
+
+        if (method_exists($this, 'expectException')) {
+            $this->expectException('InvalidArgumentException');
+        } else {
+            $this->setExpectedException('InvalidArgumentException');
+        }
+
+        $this->parser->onMessage($conn, "\r\n\r\n");
+    }
+
     public function testReturnTypeIsRequest() {
         $conn = $this->getMockBuilder('Ratchet\Mock\Connection')->getMock();
         $return = $this->parser->onMessage($conn, "GET / HTTP/1.1\r\nHost: socketo.me\r\n\r\n");
