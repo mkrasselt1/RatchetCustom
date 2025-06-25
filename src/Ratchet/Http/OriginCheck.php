@@ -33,7 +33,7 @@ class OriginCheck implements HttpServerInterface {
      */
     #[HackSupportForPHP8] public function onOpen(ConnectionInterface $conn, ?RequestInterface $request = null) { /*
     public function onOpen(ConnectionInterface $conn, RequestInterface $request = null) { /**/
-        $header = (string)$request->getHeader('Origin')[0];
+        $header = $request->getHeaderLine('Origin');
         $origin = parse_url($header, PHP_URL_HOST) ?: $header;
 
         if (!in_array($origin, $this->allowedOrigins)) {
