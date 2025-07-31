@@ -1,13 +1,18 @@
 <?php
 namespace Ratchet\Http;
 
+use PHPUnit\Framework\TestCase;
+
 /**
  * @covers Ratchet\Http\HttpRequestParser
  */
-class HttpRequestParserTest extends \PHPUnit_Framework_TestCase {
+class HttpRequestParserTest extends TestCase {
     protected $parser;
 
-    public function setUp() {
+    /**
+     * @before
+     */
+    public function setUpParser() {
         $this->parser = new HttpRequestParser;
     }
 
@@ -30,21 +35,37 @@ class HttpRequestParserTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testBufferOverflowResponse() {
-        $conn = $this->getMock('\Ratchet\ConnectionInterface');
+        $conn = $this->getMockBuilder('Ratchet\Mock\Connection')->getMock();
 
         $this->parser->maxSize = 20;
 
         $this->assertNull($this->parser->onMessage($conn, "GET / HTTP/1.1\r\n"));
 
-        $this->setExpectedException('OverflowException');
+        if (method_exists($this, 'expectException')) {
+            $this->expectException('OverflowException');
+        } else {
+            $this->setExpectedException('OverflowException');
+        }
 
         $this->parser->onMessage($conn, "Header-Is: Too Big");
     }
 
+    public function testOnMessageThrowsExceptionForEmptyNewlines() {
+        $conn = $this->getMockBuilder('Ratchet\Mock\Connection')->getMock();
+
+        if (method_exists($this, 'expectException')) {
+            $this->expectException('InvalidArgumentException');
+        } else {
+            $this->setExpectedException('InvalidArgumentException');
+        }
+
+        $this->parser->onMessage($conn, "\r\n\r\n");
+    }
+
     public function testReturnTypeIsRequest() {
-        $conn = $this->getMock('\Ratchet\ConnectionInterface');
+        $conn = $this->getMockBuilder('Ratchet\Mock\Connection')->getMock();
         $return = $this->parser->onMessage($conn, "GET / HTTP/1.1\r\nHost: socketo.me\r\n\r\n");
 
-        $this->assertInstanceOf('\Psr\Http\Message\RequestInterface', $return);
+        $this->assertInstanceOf('Psr\Http\Message\RequestInterface', $return);
     }
 }

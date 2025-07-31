@@ -22,7 +22,9 @@ class BinaryEcho implements \Ratchet\WebSocket\MessageComponentInterface {
     $impl = sprintf('React\EventLoop\%sLoop', $argc > 2 ? $argv[2] : 'StreamSelect');
 
     $loop = new $impl;
-    $sock = new React\Socket\Server('0.0.0.0:' . $port, $loop);
+
+    // prefer SocketServer (reactphp/socket v1.9+) over legacy \React\Socket\Server
+    $sock = class_exists('React\Socket\SocketServer') ? new React\Socket\SocketServer('0.0.0.0:' . $port, [], $loop) : new React\Socket\Server('0.0.0.0:' . $port, $loop);
 
     $wsServer = new Ratchet\WebSocket\WsServer(new BinaryEcho);
     // This is enabled to test https://github.com/ratchetphp/Ratchet/issues/430

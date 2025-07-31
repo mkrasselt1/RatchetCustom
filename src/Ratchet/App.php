@@ -1,9 +1,10 @@
 <?php
 namespace Ratchet;
+use React\EventLoop\Factory as LegacyLoopFactory;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
-use React\EventLoop\Factory as LoopFactory;
-use React\Socket\Server as Reactor;
-use React\Socket\SecureServer as SecureReactor;
+use React\Socket\Server as LegacySocketServer;
+use React\Socket\SocketServer;
 use Ratchet\Http\HttpServerInterface;
 use Ratchet\Http\OriginCheck;
 use Ratchet\Wamp\WampServerInterface;
@@ -52,25 +53,30 @@ class App {
     protected $_routeCounter = 0;
 
     /**
-     * @param string        $httpHost   HTTP hostname clients intend to connect to. MUST match JS `new WebSocket('ws://$httpHost');`
-     * @param int           $port       Port to listen on. If 80, assuming production, Flash on 843 otherwise expecting Flash to be proxied through 8843
-     * @param string        $address    IP address to bind to. Default is localhost/proxy only. '0.0.0.0' for any machine.
-     * @param LoopInterface $loop       Specific React\EventLoop to bind the application to. null will create one for you.
-     * @param array         $context
+     * @param string         $httpHost   HTTP hostname clients intend to connect to. MUST match JS `new WebSocket('ws://$httpHost');`
+     * @param int            $port       Port to listen on. If 80, assuming production, Flash on 843 otherwise expecting Flash to be proxied through 8843
+     * @param string         $address    IP address to bind to. Default is localhost/proxy only. '0.0.0.0' for any machine.
+     * @param ?LoopInterface $loop       Specific React\EventLoop to bind the application to. null will create one for you.
+     * @param array          $context
      */
-    public function __construct($httpHost = 'localhost', $port = 8080, $address = '127.0.0.1', LoopInterface $loop = null, $context = array()) {
+    public function __construct($httpHost = 'localhost', $port = 8080, $address = '127.0.0.1', $loop = null, $context = array()) {
         if (extension_loaded('xdebug') && getenv('RATCHET_DISABLE_XDEBUG_WARN') === false) {
             trigger_error('XDebug extension detected. Remember to disable this if performance testing or going live!', E_USER_WARNING);
         }
+        if ($loop !== null && !$loop instanceof LoopInterface) { // manual type check to support legacy PHP < 7.1
+            throw new \InvalidArgumentException('Argument #4 ($loop) expected null|React\EventLoop\LoopInterface');
+        }
 
         if (null === $loop) {
-            $loop = LoopFactory::create();
+            // prefer default Loop (reactphp/event-loop v1.2+) over legacy \React\EventLoop\Factory
+            $loop = class_exists('React\EventLoop\Loop') ? Loop::get() : LegacyLoopFactory::create();
         }
 
         $this->httpHost = $httpHost;
         $this->port = $port;
 
-        $socket = new Reactor($address . ':' . $port, $loop, $context);
+        // prefer SocketServer (reactphp/socket v1.9+) over legacy \React\Socket\Server
+        $socket = class_exists('React\Socket\SocketServer') ? new SocketServer($address . ':' . $port, $context, $loop) : new LegacySocketServer($address . ':' . $port, $loop, $context);
 
         $this->routes  = new RouteCollection;
         $this->_server = new IoServer(new HttpServer(new Router(new UrlMatcher($this->routes, new RequestContext))), $socket, $loop);
@@ -78,6 +84,16 @@ class App {
         $policy = new FlashPolicy;
         $policy->addAllowedAccess($httpHost, 80);
         $policy->addAllowedAccess($httpHost, $port);
+
+        if (80 == $port) {
+            $flashUri = '0.0.0.0:843';
+        } else {
+            $flashUri = '127.0.0.1:8843';
+        }
+
+        // prefer SocketServer (reactphp/socket v1.9+) over legacy \React\Socket\Server
+        $flashSock = class_exists('React\Socket\SocketServer') ? new SocketServer($flashUri, [], $loop) : new LegacySocketServer($flashUri, $loop);
+        $this->flashServer = new IoServer($policy, $flashSock);
     }
 
     /**

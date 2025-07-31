@@ -7,7 +7,7 @@ use Ratchet\AbstractMessageComponentTestCase;
  */
 class WampServerTest extends AbstractMessageComponentTestCase {
     public function getConnectionClassString() {
-        return '\Ratchet\Wamp\WampConnection';
+        return 'Ratchet\Wamp\WampConnection';
     }
 
     public function getDecoratorClassString() {
@@ -15,7 +15,7 @@ class WampServerTest extends AbstractMessageComponentTestCase {
     }
 
     public function getComponentClassString() {
-        return '\Ratchet\Wamp\WampServerInterface';
+        return 'Ratchet\Wamp\WampServerInterface';
     }
 
     public function testOnMessageToEvent() {
@@ -23,7 +23,7 @@ class WampServerTest extends AbstractMessageComponentTestCase {
 
         $this->_app->expects($this->once())->method('onPublish')->with(
             $this->isExpectedConnection()
-          , new \PHPUnit_Framework_Constraint_IsInstanceOf('\Ratchet\Wamp\Topic')
+          , $this->isInstanceOf('Ratchet\Wamp\Topic')
           , $published
           , array()
           , array()
@@ -34,7 +34,13 @@ class WampServerTest extends AbstractMessageComponentTestCase {
 
     public function testGetSubProtocols() {
         // todo: could expand on this
-        $this->assertInternalType('array', $this->_serv->getSubProtocols());
+        if (method_exists($this, 'assertIsArray')) {
+            // PHPUnit 7+
+            $this->assertIsArray($this->_serv->getSubProtocols());
+        } else {
+            // legacy PHPUnit
+            $this->assertInternalType('array', $this->_serv->getSubProtocols());
+        }
     }
 
     public function testConnectionClosesOnInvalidJson() {

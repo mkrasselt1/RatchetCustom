@@ -1,11 +1,13 @@
 <?php
 namespace Ratchet\Server;
 use Ratchet\MessageComponentInterface;
+use React\EventLoop\Factory as LegacyLoopFactory;
+use React\EventLoop\Loop;
 use React\EventLoop\LoopInterface;
+use React\Socket\ConnectionInterface as SocketConnection;
+use React\Socket\Server as LegacySocketServer;
 use React\Socket\ServerInterface;
-use React\EventLoop\Factory as LoopFactory;
-use React\Socket\Server as Reactor;
-use React\Socket\SecureServer as SecureReactor;
+use React\Socket\SocketServer;
 
 /**
  * Creates an open-ended socket to listen on a port for incoming connections.
@@ -13,7 +15,7 @@ use React\Socket\SecureServer as SecureReactor;
  */
 class IoServer {
     /**
-     * @var \React\EventLoop\LoopInterface
+     * @var ?\React\EventLoop\LoopInterface
      */
     public $loop;
 
@@ -33,7 +35,11 @@ class IoServer {
      * @param \React\Socket\ServerInterface       $socket   The React socket server to run the Ratchet application off of
      * @param \React\EventLoop\LoopInterface|null $loop     The React looper to run the Ratchet application off of
      */
-    public function __construct(MessageComponentInterface $app, ServerInterface $socket, LoopInterface $loop = null) {
+    public function __construct(MessageComponentInterface $app, ServerInterface $socket, $loop = null) {
+        if ($loop !== null && !$loop instanceof LoopInterface) { // manual type check to support legacy PHP < 7.1
+            throw new \InvalidArgumentException('Argument #3 ($loop) expected null|React\EventLoop\LoopInterface');
+        }
+
         if (false === strpos(PHP_VERSION, "hiphop")) {
             gc_enable();
         }
@@ -55,8 +61,11 @@ class IoServer {
      * @return IoServer
      */
     public static function factory(MessageComponentInterface $component, $port = 80, $address = '0.0.0.0') {
-        $loop   = LoopFactory::create();
-        $socket = new Reactor($address . ':' . $port, $loop);
+        // prefer default Loop (reactphp/event-loop v1.2+) over legacy \React\EventLoop\Factory
+        $loop = class_exists('React\EventLoop\Loop') ? Loop::get() : LegacyLoopFactory::create();
+
+        // prefer SocketServer (reactphp/socket v1.9+) over legacy \React\Socket\Server
+        $socket = class_exists('React\Socket\SocketServer') ? new SocketServer($address . ':' . $port, [], $loop) : new LegacySocketServer($address . ':' . $port, $loop);
 
         return new static($component, $socket, $loop);
     }
@@ -79,11 +88,16 @@ class IoServer {
      * Triggered when a new connection is received from React
      * @param \React\Socket\ConnectionInterface $conn
      */
-    public function handleConnect($conn) {
+    public function handleConnect(SocketConnection $conn) {
+        // assign dynamic `$decor` property used by Ratchet without raising notice on PHP 8.2+
+        // need this hack because we can't use `#[\AllowDynamicProperties]` on vendor code
+        set_error_handler(function () { }, E_DEPRECATED);
         $conn->decor = new IoConnection($conn);
+        restore_error_handler();
+
         $conn->decor->resourceId = (int)$conn->stream;
 
-        $uri = $conn->getRemoteAddress();
+        $uri = (string) $conn->getRemoteAddress();
         $conn->decor->remoteAddress = trim(
             parse_url((strpos($uri, '://') === false ? 'tcp://' : '') . $uri, PHP_URL_HOST),
             '[]'

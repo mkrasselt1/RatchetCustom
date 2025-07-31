@@ -1,11 +1,16 @@
 # Ratchet
 
-[![GitHub Actions][GA Image]][GA Link]
+[![CI status](https://github.com/ratchetphp/Ratchet/actions/workflows/ci.yml/badge.svg)](https://github.com/ratchetphp/Ratchet/actions)
 [![Autobahn Testsuite](https://img.shields.io/badge/Autobahn-passing-brightgreen.svg)](http://socketo.me/reports/ab/index.html)
 [![Latest Stable Version](https://poser.pugx.org/cboden/ratchet/v/stable.png)](https://packagist.org/packages/cboden/ratchet)
 
 A PHP library for asynchronously serving WebSockets.
 Build up your application through simple interfaces and re-use your application without changing any of its code just by combining different components.
+
+## Reviving Ratchet!
+
+We're currently aiming to revive Ratchet to get it up to date with the latest versions and use this as a starting point for bigger updates to come.
+We need your help to achieve this goal, see [ticket #1054](https://github.com/ratchetphp/Ratchet/issues/1054) for ways to help out. ❤️
 
 ## Requirements
 
@@ -82,6 +87,25 @@ class MyChat implements MessageComponentInterface {
     conn.onopen = function(e) { conn.send('Hello Me!'); };
 ```
 
-[GA Image]: https://github.com/ratchetphp/Ratchet/workflows/CI/badge.svg
+## Install
 
-[GA Link]: https://github.com/ratchetphp/Ratchet/actions?query=workflow%3A%22CI%22+branch%3Amaster
+The recommended way to install this library is [through Composer](https://getcomposer.org/).
+[New to Composer?](https://getcomposer.org/doc/00-intro.md)
+
+This will install the latest supported version:
+
+```bash
+composer require cboden/ratchet:^0.4.4
+```
+
+See also the [CHANGELOG](CHANGELOG.md) for details about version upgrades.
+
+This project aims to run on any platform and thus does not require any PHP
+extensions and supports running on legacy PHP 5.4 through current PHP 8+.
+It's *highly recommended to use the latest supported PHP version* for this project.
+
+See above note about [Reviving Ratchet](#reviving-ratchet) for newer PHP support.
+
+## License
+
+MIT, see [LICENSE file](LICENSE).

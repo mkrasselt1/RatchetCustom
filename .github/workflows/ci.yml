@@ -1,17 +1,13 @@
 name: "CI"
 
 on:
-  pull_request:
   push:
-    branches:
-      - "master"
-  schedule:
-    - cron: "42 3 * * *"
+  pull_request:
 
 jobs:
   phpunit:
     name: "PHPUnit"
-    runs-on: "ubuntu-20.04"
+    runs-on: "ubuntu-24.04"
 
     strategy:
       matrix:
@@ -24,6 +20,11 @@ jobs:
           - "7.2"
           - "7.3"
           - "7.4"
+          - "8.0"
+          - "8.1"
+          - "8.2"
+          - "8.3"
+          - "8.4"
         dependencies:
           - "highest"
         include:
@@ -32,7 +33,7 @@ jobs:
 
     steps:
       - name: "Checkout"
-        uses: "actions/checkout@v2"
+        uses: "actions/checkout@v4"
         with:
           fetch-depth: 2
 
@@ -44,9 +45,9 @@ jobs:
           ini-values: "zend.assertions=1"
 
       - name: "Install dependencies with Composer"
-        uses: "ramsey/composer-install@v1"
+        uses: "ramsey/composer-install@v3"
         with:
           dependency-versions: "${{ matrix.dependencies }}"
 
       - name: "Run PHPUnit"
-        run: "vendor/bin/phpunit"
+        run: "vendor/bin/phpunit ${{ matrix.php-version < 7.3 && ' -c phpunit.xml.legacy' || '' }}"

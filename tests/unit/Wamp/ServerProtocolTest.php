@@ -1,5 +1,6 @@
 <?php
 namespace Ratchet\Wamp;
+use PHPUnit\Framework\TestCase;
 use Ratchet\Mock\Connection;
 use Ratchet\Mock\WampComponent as TestComponent;
 
@@ -8,12 +9,15 @@ use Ratchet\Mock\WampComponent as TestComponent;
  * @covers \Ratchet\Wamp\WampServerInterface
  * @covers \Ratchet\Wamp\WampConnection
  */
-class ServerProtocolTest extends \PHPUnit_Framework_TestCase {
+class ServerProtocolTest extends TestCase {
     protected $_comp;
 
     protected $_app;
 
-    public function setUp() {
+    /**
+     * @before
+     */
+    public function setUpProtocol() {
         $this->_app  = new TestComponent;
         $this->_comp = new ServerProtocol($this->_app);
     }
@@ -36,7 +40,11 @@ class ServerProtocolTest extends \PHPUnit_Framework_TestCase {
      * @dataProvider invalidMessageProvider
      */
     public function testInvalidMessages($type) {
-        $this->setExpectedException('\Ratchet\Wamp\Exception');
+        if (method_exists($this, 'expectException')) {
+            $this->expectException('Ratchet\Wamp\Exception');
+        } else {
+            $this->setExpectedException('Ratchet\Wamp\Exception');
+        }
 
         $conn = $this->newConn();
         $this->_comp->onOpen($conn);
@@ -180,7 +188,7 @@ class ServerProtocolTest extends \PHPUnit_Framework_TestCase {
         $this->_comp->onOpen($conn);
         $this->_comp->onClose($conn);
 
-        $class  = new \ReflectionClass('\\Ratchet\\Wamp\\WampConnection');
+        $class  = new \ReflectionClass('Ratchet\\Wamp\\WampConnection');
         $method = $class->getMethod('getConnection');
         $method->setAccessible(true);
 
@@ -197,7 +205,7 @@ class ServerProtocolTest extends \PHPUnit_Framework_TestCase {
         $this->_comp->onOpen($conn);
         $this->_comp->onError($conn, $e);
 
-        $class  = new \ReflectionClass('\\Ratchet\\Wamp\\WampConnection');
+        $class  = new \ReflectionClass('Ratchet\\Wamp\\WampConnection');
         $method = $class->getMethod('getConnection');
         $method->setAccessible(true);
 
@@ -222,7 +230,11 @@ class ServerProtocolTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testMessageMustBeJson() {
-        $this->setExpectedException('\\Ratchet\\Wamp\\JsonException');
+        if (method_exists($this, 'expectException')) {
+            $this->expectException('Ratchet\Wamp\Exception');
+        } else {
+            $this->setExpectedException('Ratchet\Wamp\Exception');
+        }
 
         $conn = new Connection;
 
@@ -241,7 +253,7 @@ class ServerProtocolTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testWampOnMessageApp() {
-        $app = $this->getMock('\\Ratchet\\Wamp\\WampServerInterface');
+        $app = $this->getMockBuilder('Ratchet\\Wamp\\WampServerInterface')->getMock();
         $wamp = new ServerProtocol($app);
 
         $this->assertContains('wamp', $wamp->getSubProtocols());
@@ -259,7 +271,11 @@ class ServerProtocolTest extends \PHPUnit_Framework_TestCase {
      * @dataProvider badFormatProvider
      */
     public function testValidJsonButInvalidProtocol($message) {
-        $this->setExpectedException('\Ratchet\Wamp\Exception');
+        if (method_exists($this, 'expectException')) {
+            $this->expectException('Ratchet\Wamp\Exception');
+        } else {
+            $this->setExpectedException('Ratchet\Wamp\Exception');
+        }
 
         $conn = $this->newConn();
         $this->_comp->onOpen($conn);
@@ -267,7 +283,11 @@ class ServerProtocolTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testBadClientInputFromNonStringTopic() {
-        $this->setExpectedException('\Ratchet\Wamp\Exception');
+        if (method_exists($this, 'expectException')) {
+            $this->expectException('Ratchet\Wamp\Exception');
+        } else {
+            $this->setExpectedException('Ratchet\Wamp\Exception');
+        }
 
         $conn = new WampConnection($this->newConn());
         $this->_comp->onOpen($conn);
@@ -276,7 +296,11 @@ class ServerProtocolTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testBadPrefixWithNonStringTopic() {
-        $this->setExpectedException('\Ratchet\Wamp\Exception');
+        if (method_exists($this, 'expectException')) {
+            $this->expectException('Ratchet\Wamp\Exception');
+        } else {
+            $this->setExpectedException('Ratchet\Wamp\Exception');
+        }
 
         $conn = new WampConnection($this->newConn());
         $this->_comp->onOpen($conn);
@@ -285,7 +309,11 @@ class ServerProtocolTest extends \PHPUnit_Framework_TestCase {
     }
 
     public function testBadPublishWithNonStringTopic() {
-        $this->setExpectedException('\Ratchet\Wamp\Exception');
+        if (method_exists($this, 'expectException')) {
+            $this->expectException('Ratchet\Wamp\Exception');
+        } else {
+            $this->setExpectedException('Ratchet\Wamp\Exception');
+        }
 
         $conn = new WampConnection($this->newConn());
         $this->_comp->onOpen($conn);
